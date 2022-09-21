@@ -10,12 +10,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material.Scaffold
-import androidx.compose.material.SnackbarDuration
-import androidx.compose.material.Text
-import androidx.compose.material.rememberScaffoldState
+import androidx.compose.material.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
@@ -33,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.ConstraintSet
+import androidx.constraintlayout.compose.Dimension
 import com.el3asas.myfirstcomposeapp.ui.theme.MyFirstComposeAppTheme
 import kotlinx.coroutines.launch
 
@@ -41,75 +39,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MyFirstComposeAppTheme {
-                // A surface container using the 'background' color from the theme
-                val scaffoldState = rememberScaffoldState()
-                Scaffold(
-                    modifier = Modifier.fillMaxSize(),
-                    scaffoldState = scaffoldState
-                ) {
-                    val scope = rememberCoroutineScope()
-                    val constraints = ConstraintSet {
-                        val headerSendButton = createRefFor("headerBtn")
-                        val bottomView = createRefFor("bottomView")
-                        val recyclerView = createRefFor("recyclerView")
-                        constrain(headerSendButton) {
-                            top.linkTo(parent.top)
-                            start.linkTo(parent.start)
-                        }
-
-                        constrain(bottomView) {
-                            bottom.linkTo(parent.bottom)
-                        }
-                        constrain(recyclerView) {
-                            top.linkTo(headerSendButton.bottom)
-                            bottom.linkTo(bottomView.top)
-                        }
-                    }
-                    ConstraintLayout(constraints, modifier = Modifier.fillMaxSize()) {
-                        val painter = painterResource(id = R.drawable.ic_baseline_send_24)
-                        Row(
-                            Modifier
-                                .fillMaxWidth()
-                                .background(Color.Cyan)
-                                .layoutId("headerBtn")
-                        ) {
-                            HeaderSendButton(painter = painter) {
-                                Log.d("****************", "onCreate: HeaderSendButton clicked")
-                                scope.launch {
-                                    scaffoldState.snackbarHostState.apply {
-                                        showSnackbar(
-                                            message = "HeaderSendButton clicked",
-                                            actionLabel = "send again",
-                                            duration = SnackbarDuration.Short
-                                        )
-                                    }
-                                }
-                            }
-                            Text(
-                                text = "Add Your Templates To Send..",
-                                textAlign = TextAlign.Start,
-                                modifier = Modifier.align(CenterVertically)
-                            )
-                        }
-
-                        ItemsRecyclerView(
-                            modifier = Modifier.layoutId("recyclerView"),
-                            list = listOf(
-                                "ahmed",
-                                "ahmed",
-                                "ahmed",
-                                "ahmed",
-                                "ahmed",
-                                "ahmed",
-                                "ahmed",
-                                "ahmed",
-                            )
-                        )
-                        BottomView(Modifier.layoutId("bottomView"))
-                    }
-                }
-            }
+            DefaultPreview()
         }
     }
 }
@@ -119,7 +49,7 @@ fun HeaderSendButton(
     painter: Painter,
     modifier: Modifier = Modifier,
     contentDescription: String = "",
-    onClick: () -> Unit
+    onClickListener: () -> Unit
 ) {
     Box(modifier.padding(16.dp)) {
         Image(
@@ -127,9 +57,24 @@ fun HeaderSendButton(
             contentDescription = contentDescription,
             modifier = Modifier
                 .rotate(180f)
-                .clickable {
-                    onClick()
-                })
+                .clickable(
+                    onClick = { onClickListener() }
+                ))
+    }
+}
+
+@Composable
+fun NameInput(modifier: Modifier,initial:String){
+    var value by remember {
+        mutableStateOf(initial)
+    }
+    Box(
+        Modifier.layoutId("nameInput")
+            .fillMaxWidth()
+            .padding(10.dp)) {
+        TextField(value = value, modifier = modifier, onValueChange = {
+            value=it
+        })
     }
 }
 
@@ -154,12 +99,12 @@ fun BottomView(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun ItemsRecyclerView(modifier: Modifier = Modifier, list: List<String>) {
+fun ItemsRecyclerView(modifier: Modifier = Modifier) {
     LazyColumn(modifier = modifier) {
-        itemsIndexed(list) { index: Int, data: String ->
+        items(count=1000) {
             Text(
-                text = data,
-                textAlign = TextAlign.Center,
+                text = "text $it",
+                textAlign = TextAlign.Start,
                 color = Color.Blue,
                 fontSize = 14.sp,
                 modifier = Modifier
@@ -170,15 +115,77 @@ fun ItemsRecyclerView(modifier: Modifier = Modifier, list: List<String>) {
     }
 }
 
-@Composable
-fun Greeting(name: String) {
-    Text(text = "Hello $name!")
-}
-
 @Preview(showBackground = true)
 @Composable
-fun DefaultPreview() {
+fun DefaultPreview(){
     MyFirstComposeAppTheme {
-        Greeting("Android")
+        val scaffoldState = rememberScaffoldState()
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            scaffoldState = scaffoldState
+        ) {
+            val scope = rememberCoroutineScope()
+            val constraints = ConstraintSet {
+                val headerSendButton = createRefFor("headerBtn")
+                val bottomView = createRefFor("bottomView")
+                val recyclerView = createRefFor("recyclerView")
+                val nameInputView = createRefFor("nameInput")
+                constrain(headerSendButton) {
+                    top.linkTo(parent.top)
+                    start.linkTo(parent.start)
+                }
+
+                constrain(bottomView) {
+                    bottom.linkTo(parent.bottom)
+                }
+
+                constrain(nameInputView) {
+                    bottom.linkTo(bottomView.bottom)
+                }
+
+                constrain(recyclerView) {
+                    top.linkTo(headerSendButton.bottom)
+                    bottom.linkTo(nameInputView.top)
+                    height= Dimension.fillToConstraints
+                }
+            }
+
+            ConstraintLayout(constraints, modifier = Modifier.fillMaxSize()) {
+                val painter = painterResource(id = R.drawable.ic_baseline_send_24)
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .background(Color.Cyan)
+                        .layoutId("headerBtn")
+                ) {
+                    HeaderSendButton(painter = painter) {
+                        Log.d("****************", "onCreate: HeaderSendButton clicked")
+                        scope.launch {
+                            scaffoldState.snackbarHostState.apply {
+                                showSnackbar(
+                                    message = "HeaderSendButton clicked",
+                                    actionLabel = "send again",
+                                    duration = SnackbarDuration.Short
+                                )
+                            }
+                        }
+                    }
+                    Text(
+                        text = "Add Your Templates To Send..",
+                        textAlign = TextAlign.Start,
+                        modifier = Modifier.align(CenterVertically)
+                    )
+                }
+
+                ItemsRecyclerView(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .layoutId("recyclerView")
+                )
+
+                NameInput(Modifier.fillMaxWidth(),"initial value")
+                BottomView(Modifier.layoutId("bottomView"))
+            }
+        }
     }
 }
